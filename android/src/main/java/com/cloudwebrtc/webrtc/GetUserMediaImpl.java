@@ -139,19 +139,14 @@ public class GetUserMediaImpl extends Service {
         }
     }
 
-    @Override
-    public IBinder onBind(Intent intent) {
-        return binder;
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
+    void createNotification(Intent intent) {
         Intent notificationIntent = getPackageManager().getLaunchIntentForPackage(getPackageName());
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 
         String notificationTitle = intent.getStringExtra(NOTIFICATION_TITLE);
         String notificationText = intent.getStringExtra(NOTIFICATION_TEXT);
         String notificationChannel = intent.getStringExtra(NOTIFICATION_CHANNEL);
+        Log.d("rtc", "createNotification title:" + notificationTitle + " text:" + notificationText + " channel:" + notificationChannel);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel serviceChannel = new NotificationChannel(
@@ -176,7 +171,28 @@ public class GetUserMediaImpl extends Service {
                     .build();
             startForeground(NOTIFICATION_ID, notification);
         }
+    }
 
+    @Override
+    public IBinder onBind(Intent intent) {
+        createNotification(intent);
+        return binder;
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        PeerConnectionFactory.initialize(
+                PeerConnectionFactory.InitializationOptions.builder(this)
+                        .setEnableInternalTracer(true)
+                        .createInitializationOptions());
+        Log.d("rtc", "PeerConnectionFactory init");
+    }
+
+
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
         return super.onStartCommand(intent, flags, startId);
     }
 
