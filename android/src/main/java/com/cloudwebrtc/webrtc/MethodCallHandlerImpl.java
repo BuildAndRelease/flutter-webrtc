@@ -130,17 +130,6 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
   }
 
   private void initialize(final MethodCall call, final AnyThreadResult result) {
-    if (getUserMediaImpl != null) {
-      result.error("initialize", "The plugin is already initialized.", null);
-//      result.success(null);
-      return;
-    }
-
-    PeerConnectionFactory.initialize(
-            InitializationOptions.builder(context)
-                    .setEnableInternalTracer(true)
-                    .createInitializationOptions());
-
     Intent intent = new Intent(context, GetUserMediaImpl.class);
     intent.putExtra(GetUserMediaImpl.NOTIFICATION_TITLE, (String)call.argument("title"));
     intent.putExtra(GetUserMediaImpl.NOTIFICATION_TEXT, (String)call.argument("text"));
@@ -159,9 +148,9 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
       public void onServiceDisconnected(ComponentName arg0) {
         getUserMediaImpl = null;
         mFactory = null;
+        result.error("initialize", "onServiceDisconnected", null);
       }
     };
-    context.startService(intent);
     context.bindService(intent, connection, Context.BIND_AUTO_CREATE);
   }
 
@@ -877,6 +866,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
       audioManager.onAudioManagerRequested(true);
     }
     mPeerConnectionObservers.put(peerConnectionId, observer);
+    Log.d("rtc", "peerConnection size:" + mPeerConnectionObservers.size());
     return peerConnectionId;
   }
 
